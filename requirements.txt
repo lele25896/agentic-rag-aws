@@ -1,0 +1,15 @@
+langgraph
+langgraph-checkpoint-sqlite
+langchain-core
+langchain-community
+langchain-text-splitters
+langchain-ollama
+langchain-aws
+langchain-huggingface   # local embeddings only (needs sentence-transformers + torch)
+faiss-cpu
+pymupdf
+pydantic
+mcp
+ddgs
+boto3
+pytest

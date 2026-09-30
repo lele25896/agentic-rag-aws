@@ -1,0 +1,5 @@
+*
+!src/agent
+!data/*.pdf
+!index/bedrock
+**/__pycache__

@@ -3,17 +3,32 @@
 Code: [infra/main.tf](../infra/main.tf), [Dockerfile](../Dockerfile), [scripts/deploy.sh](../scripts/deploy.sh),
 [src/agent/handler.py](../src/agent/handler.py), [tests/test_handler.py](../tests/test_handler.py).
 
-## Status (honest)
-| Piece | State |
+## Status
+**Deployed and verified on 2026-10-02** (account eu-west-1, Function URL protected by `x-api-key`).
+| Check | Result |
 |---|---|
-| `handler.py` auth + routing + validation | **tested locally** (`test_handler.py`) |
-| Terraform | **`terraform validate` passes**, `fmt` clean. Never applied: no AWS credentials on this machine |
-| `deploy.sh` | `bash -n` passes. Never run (no `aws` CLI here; needs docker + creds) |
-| Docker image | not built |
-| `LLM_BACKEND=bedrock` path (`ChatBedrockConverse`, Titan embeddings, `DynamoDBSaver`) | code written, **not exercised** |
-| End-to-end HITL over HTTP | logic covered by the local CLI smoke (Phase 2); HTTP + DynamoDB leg untested |
+| `terraform apply` | 10 resources (+1 permission added after the first test), clean |
+| Wrong/missing key | 401 from the handler |
+| `/chat` plain question (react) | 200, "42", ~8-13 s (cold start ~4 s) |
+| `/chat` retrieval question | 200, correct paper id, FAISS + Titan index baked into the image |
+| `/chat` gated question | `needs_approval` with `{tool: extract_pdf, args}` |
+| `/approve` (a different invocation) | 200, correct title + authors; paused state came back from DynamoDB |
+| `/chat` plan design | 200, 6-10 s typical, one 40 s outlier (see below) |
+| Cost of the whole session | well under USD 2 (Bedrock evals ~USD 1.4 incl. reruns, rest is free tier) |
 
-So "deployed" in the project's *Done when* is **still open**; everything needed to close it is in the repo.
+## What the first live deploy broke (and the fixes)
+1. **403 from AWS before the handler ran.** Since late 2025 a public (auth NONE) Function URL needs *two*
+   resource policies: `lambda:InvokeFunctionUrl` **and** `lambda:InvokeFunction` with
+   `lambda:InvokedViaFunctionUrl = true`. Terraform provider 5.x has no flag for the second one, so the
+   provider constraint moved to `>= 6.0` (`invoked_via_function_url = true`). Found by testing the live URL.
+2. **`invalid json` on a valid request.** Function URLs deliver the body base64-encoded
+   (`isBase64Encoded: true`) unless the content type is JSON/text; `curl -d` sends form-encoded. Handler now
+   decodes (`test_base64_body_is_decoded`).
+3. **New image, old code.** Pushing `:latest` again changes nothing for Terraform (same tag), so Lambda kept
+   running the old image. `deploy.sh` now calls `update-function-code` + `wait function-updated`.
+4. **Sporadic ~60 s stalls** on Bedrock calls (botocore's default read timeout, then a successful retry; also
+   one 64 s outlier in the eval). Client config is now `read_timeout=30, max_attempts=3`: a hung call retries
+   after 30 s. Residual: an occasional 30-40 s request.
 
 ## Architecture
 ```
@@ -42,7 +57,7 @@ client --HTTPS (x-api-key)--> Lambda Function URL --> Lambda (container image, 2
   `scripts/deploy.sh --destroy` removes everything (`force_delete` on the ECR repo).
 
 ## How to deploy (needs an AWS account)
-1. Enable model access in the Bedrock console for Claude Haiku 4.5 and Titan Text Embeddings v2 (eu-west-1).
+1. Bedrock: submit the Anthropic use-case form once; wait for account verification (it blocked both Titan and Haiku for a while); model access can take ~15 min to propagate.
 2. `aws configure` (or SSO), `export TF_VAR_alert_email=you@example.com`.
 3. `LLM_BACKEND=bedrock PYTHONPATH=src python -m agent.retrieval` -> `index/bedrock/`.
 4. `bash scripts/deploy.sh` -> prints the Function URL; key: `terraform -chdir=infra output -raw api_key`.

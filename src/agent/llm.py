@@ -16,9 +16,12 @@ AWS_REGION = os.environ.get("AWS_REGION", "eu-west-1")
 
 def get_llm():
     if BACKEND == "bedrock":
+        from botocore.config import Config
         from langchain_aws import ChatBedrockConverse
 
-        return ChatBedrockConverse(model=BEDROCK_MODEL, region_name=AWS_REGION, temperature=0)
+        # Bedrock calls occasionally hang until botocore's 60 s read timeout; fail fast and retry instead
+        cfg = Config(read_timeout=30, retries={"max_attempts": 3, "mode": "standard"})
+        return ChatBedrockConverse(model=BEDROCK_MODEL, region_name=AWS_REGION, temperature=0, config=cfg)
     from langchain_ollama import ChatOllama
 
     # thinking off: 12B on an 8GB laptop GPU takes minutes per query otherwise

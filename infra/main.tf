@@ -1,7 +1,7 @@
 terraform {
   required_version = ">= 1.5"
   required_providers {
-    aws    = { source = "hashicorp/aws", version = "~> 5.0" }
+    aws    = { source = "hashicorp/aws", version = ">= 6.0" }
     random = { source = "hashicorp/random", version = "~> 3.0" }
   }
 }
@@ -119,6 +119,15 @@ resource "aws_lambda_permission" "url_public" {
   function_name          = aws_lambda_function.app.function_name
   principal              = "*"
   function_url_auth_type = "NONE"
+}
+
+# Since late 2025 a public Function URL needs BOTH permissions, else AWS answers 403 before the handler runs.
+resource "aws_lambda_permission" "url_invoke" {
+  statement_id             = "AllowPublicInvokeViaFunctionUrl"
+  action                   = "lambda:InvokeFunction"
+  function_name            = aws_lambda_function.app.function_name
+  principal                = "*"
+  invoked_via_function_url = true
 }
 
 resource "aws_budgets_budget" "monthly" {

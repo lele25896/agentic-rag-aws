@@ -9,8 +9,8 @@ an MCP server, an eval harness comparing two agent designs, and a Terraform-defi
 |---|---|
 | Agent (ReAct + plan-and-execute), tools, HITL | done, tested locally |
 | MCP server | done, tested over stdio |
-| Evals (30 tasks x 2 designs) | done on Ollama; Bedrock run pending |
-| AWS (Terraform, Docker, handler) | written, `terraform validate` passes, **not deployed** |
+| Evals (30 tasks x 2 designs) | done on Ollama and Bedrock |
+| AWS (Terraform, Docker, handler) | **deployed and tested** (eu-west-1: Lambda + Bedrock + DynamoDB); tear down with `scripts/deploy.sh --destroy` |
 
 ## Architecture
 ```

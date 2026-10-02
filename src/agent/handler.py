@@ -3,6 +3,7 @@
   POST /approve  {"thread_id": str, "approve": bool}           -> same shape (resumes the paused graph)
 Every request needs header x-api-key == $API_KEY. Paused state lives in DynamoDB ($CHECKPOINT_TABLE),
 so /approve can land on a different Lambda instance than /chat."""
+import base64
 import hmac
 import json
 import os
@@ -50,7 +51,10 @@ def handler(event, context=None):
     if not key or not hmac.compare_digest(given.encode(), key.encode()):
         return _reply(401, {"error": "unauthorized"})
     try:
-        body = json.loads(event.get("body") or "{}")
+        raw = event.get("body") or "{}"
+        if event.get("isBase64Encoded"):  # Function URLs base64 the body unless content-type is json/text
+            raw = base64.b64decode(raw).decode()
+        body = json.loads(raw)
         route = event.get("rawPath", "")
         if route == "/chat":
             design = body.get("design", "react")

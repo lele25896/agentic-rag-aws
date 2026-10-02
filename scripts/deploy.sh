@@ -18,5 +18,8 @@ aws ecr get-login-password --region "$REGION" | docker login --username AWS --pa
 docker build --provenance=false -t "$REPO:latest" .   # Lambda rejects OCI attestation manifests
 docker push "$REPO:latest"
 $TF apply -auto-approve
+# same :latest tag => terraform sees no diff, so point Lambda at the freshly pushed image explicitly
+aws lambda update-function-code --region "$REGION" --function-name agentic-rag --image-uri "$REPO:latest" >/dev/null
+aws lambda wait function-updated --region "$REGION" --function-name agentic-rag
 echo "URL: $($TF output -raw function_url)"
 echo "API key: terraform -chdir=infra output -raw api_key"

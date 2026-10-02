@@ -64,4 +64,4 @@ HTTP 200  {"status": "done", "thread_id": "plan:440dd1b2...", "answer": "# Final
 \n\n**Calculation:**\n- 17 × 23 = 391\n- 391 + 9 = 400"}
 ```
 Earlier in the same session this request sometimes took 40-70 s because of occasional hung Bedrock calls; the client
-now uses `read_timeout=30` with retries (see `reports/phase5-aws.md`).
+now uses `read_timeout=30` with retries.

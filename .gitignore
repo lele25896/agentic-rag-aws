@@ -8,3 +8,4 @@ index/
 infra/build/
 *.log
 data/*.pdf
+reports/

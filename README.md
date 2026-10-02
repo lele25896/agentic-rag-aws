@@ -30,7 +30,12 @@ AWS: Function URL -> Lambda (image) -> Bedrock + FAISS in image + DynamoDB check
 | Ollama, gemma4:12b (laptop GPU) | Plan-and-execute | 80% | 30% | 100% | 77 s | 9.4k | 0 |
 
 Quality is about equal (the 3-point gaps are 1 task); plan-and-execute costs about 2x the tokens, money and
-latency. Caveats (same-model judge, n=30, strict tool metric) in [reports/phase3-evals.md](reports/phase3-evals.md).
+latency.
+
+Caveats: the judge for the retrieval tasks is the same model as the agent; n=30 and one run per cell, so
+differences of 1-3 points are noise; the exact tool-choice metric counts harmless extra calls as errors (hence the
+looser "covered" column). The first Bedrock run crashed on 13 of 60 tasks because model-supplied field names in
+`extract_pdf` violate Bedrock's schema-key rule; names are now sanitised and only the crashed tasks were rerun.
 
 ## Run it locally
 The corpus PDFs are not committed (ids and titles in `data/SOURCES.md`). Fetch them once:
@@ -52,11 +57,21 @@ Local model: `gemma4:12b` (needs tool calling; llama3 has none). Override with `
 
 ## Deploy to AWS
 The stack is currently **not running**; this is a recorded demo, see [docs/demo.md](docs/demo.md).
-See [reports/phase5-aws.md](reports/phase5-aws.md). `bash scripts/deploy.sh` / `--destroy`.
-
-## Reports
-One study note per phase in `reports/` (phase0 to phase5) and the [final report](reports/final-report.md).
+Needs `aws` (configured), `docker`, `terraform`, Bedrock access to Claude Haiku 4.5 and Titan Text Embeddings v2
+in the chosen region (default `eu-west-1`; the Anthropic use-case form must be submitted once per account).
+```bash
+LLM_BACKEND=bedrock PYTHONPATH=src python -m agent.retrieval     # build index/bedrock (baked into the image)
+export TF_VAR_alert_email=you@example.com                         # budget alarm: USD 10/month, alert at 80%
+bash scripts/deploy.sh                                            # ECR -> image -> Lambda + Function URL + DynamoDB
+terraform -chdir=infra output -raw api_key                        # send as header x-api-key
+curl -X POST $URL/chat -H "x-api-key: $KEY" -d '{"question":"...","design":"react"}'
+curl -X POST $URL/approve -H "x-api-key: $KEY" -d '{"thread_id":"...","approve":true}'
+bash scripts/deploy.sh --destroy                                  # remove everything
+```
+`/chat` returns `done` or `needs_approval` (with the pending tool call); `/approve` resumes the paused run from
+DynamoDB. Public Function URLs need two Lambda permissions (`InvokeFunctionUrl` and `InvokeFunction`), which is why
+the Terraform AWS provider is pinned to `>= 6.0`.
 
 ## Layout
 `src/agent/` (llm, retrieval, tools, graph_react, graph_plan, cli, mcp_server, handler) - `evals/` - `infra/` -
-`tests/` - `reports/` (one study note per phase) - `data/` (7 arXiv PDFs, ids in `data/SOURCES.md`).
+`tests/` - `docs/` (recorded demo) - `data/` (7 arXiv PDFs, ids in `data/SOURCES.md`).

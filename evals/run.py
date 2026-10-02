@@ -20,8 +20,8 @@ from agent import graph_plan, graph_react  # noqa: E402
 from agent.llm import BACKEND, get_llm  # noqa: E402
 
 RAW = HERE / "raw"
-# USD per 1M tokens (in, out); local Ollama is free. ponytail: one Bedrock price, update if BEDROCK_MODEL changes
-PRICE = {"bedrock": (1.0, 5.0), "ollama": (0.0, 0.0)}[BACKEND]
+# USD per 1M tokens (in, out); local Ollama is free. ponytail: one Bedrock price (EU regional profile: +10% over global), update if BEDROCK_MODEL changes
+PRICE = {"bedrock": (1.1, 5.5), "ollama": (0.0, 0.0)}[BACKEND]
 
 
 class ToolLog(BaseCallbackHandler):
@@ -98,14 +98,17 @@ def run(design: str, limit: int | None):
 
 def report():
     rows = [json.loads(l) for p in sorted(RAW.glob("*.jsonl")) for l in p.read_text(encoding="utf-8").splitlines()]
+    expected = {t["id"]: set(t["expected_tools"]) for t in map(json.loads, (HERE / "tasks.jsonl").read_text(encoding="utf-8").splitlines())}
+    for r in rows:  # looser tool metric: every expected tool was used (extra calls allowed)
+        r["tool_cover"] = expected[r["id"]] <= set(r["tools"])
     groups = defaultdict(list)
     for r in rows:
         groups[(r["backend"], r["design"])].append(r)
     pct = lambda xs: f"{100 * sum(xs) / len(xs):.0f}%"
-    out = ["| backend | design | n | task success | tool-choice acc | avg latency (s) | avg tokens | total cost (USD) |", "|---|---|---|---|---|---|---|---|"]
+    out = ["| backend | design | n | task success | tool-choice acc (exact) | tools covered | avg latency (s) | avg tokens | total cost (USD) |", "|---|---|---|---|---|---|---|---|---|"]
     cats = defaultdict(dict)
     for (b, d), rs in groups.items():
-        out.append(f"| {b} | {d} | {len(rs)} | {pct([r['success'] for r in rs])} | {pct([r['tool_ok'] for r in rs])} | "
+        out.append(f"| {b} | {d} | {len(rs)} | {pct([r['success'] for r in rs])} | {pct([r['tool_ok'] for r in rs])} | {pct([r['tool_cover'] for r in rs])} | "
                    f"{sum(r['secs'] for r in rs) / len(rs):.1f} | {sum(r['tokens_in'] + r['tokens_out'] for r in rs) / len(rs):.0f} | "
                    f"{sum(r['usd'] for r in rs):.3f} |")
         for c in sorted({r["category"] for r in rs}):

@@ -9,9 +9,9 @@ BACKEND = os.environ.get("LLM_BACKEND", "ollama")
 INDEX_DIR = Path(os.environ.get("INDEX_DIR", ROOT / "index")) / BACKEND
 
 OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "gemma4:12b")  # llama3 has no tool calling
-BEDROCK_MODEL = os.environ.get("BEDROCK_MODEL", "us.anthropic.claude-haiku-4-5-20251001-v1:0")
+BEDROCK_MODEL = os.environ.get("BEDROCK_MODEL", "eu.anthropic.claude-haiku-4-5-20251001-v1:0")
 BEDROCK_EMBED = os.environ.get("BEDROCK_EMBED", "amazon.titan-embed-text-v2:0")
-AWS_REGION = os.environ.get("AWS_REGION", "us-east-1")
+AWS_REGION = os.environ.get("AWS_REGION", "eu-west-1")
 
 
 def get_llm():

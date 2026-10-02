@@ -6,13 +6,13 @@ terraform {
   }
 }
 
-variable "region" { default = "us-east-1" }
+variable "region" { default = "eu-west-1" }
 variable "alert_email" {
   description = "Gets a mail at 80% of the monthly budget (confirm the AWS subscription)"
   type        = string
 }
 variable "monthly_budget_usd" { default = "10" }
-variable "bedrock_model" { default = "us.anthropic.claude-haiku-4-5-20251001-v1:0" }
+variable "bedrock_model" { default = "eu.anthropic.claude-haiku-4-5-20251001-v1:0" }
 variable "name" { default = "agentic-rag" }
 
 provider "aws" { region = var.region }

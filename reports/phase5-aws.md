@@ -42,7 +42,7 @@ client --HTTPS (x-api-key)--> Lambda Function URL --> Lambda (container image, 2
   `scripts/deploy.sh --destroy` removes everything (`force_delete` on the ECR repo).
 
 ## How to deploy (needs an AWS account)
-1. Enable model access in the Bedrock console for Claude Haiku 4.5 and Titan Text Embeddings v2 (us-east-1).
+1. Enable model access in the Bedrock console for Claude Haiku 4.5 and Titan Text Embeddings v2 (eu-west-1).
 2. `aws configure` (or SSO), `export TF_VAR_alert_email=you@example.com`.
 3. `LLM_BACKEND=bedrock PYTHONPATH=src python -m agent.retrieval` -> `index/bedrock/`.
 4. `bash scripts/deploy.sh` -> prints the Function URL; key: `terraform -chdir=infra output -raw api_key`.
@@ -53,4 +53,4 @@ client --HTTPS (x-api-key)--> Lambda Function URL --> Lambda (container image, 2
 ## Known risks
 - Image build for Lambda needs `--provenance=false` (handled in the script) or Lambda rejects the manifest.
 - The first `apply` needs the ECR repo to exist before the image push, hence the two-step `-target` apply.
-- Bedrock cross-region inference profile ids (`us.anthropic...`) must match the region.
+- Bedrock cross-region inference profile ids (`eu.anthropic...`) must match the region.

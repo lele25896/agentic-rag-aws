@@ -29,7 +29,23 @@ does not pollute latency.
 
 By category (success): calc react 100% / plan 80%; extract 80/80; mixed 100/100; retrieval 67/67; web 100/100.
 
-## Reading the numbers
+## Results (Bedrock, Claude Haiku 4.5 via the `eu.` inference profile, eu-west-1)
+| design | n | task success | tool-choice (exact) | expected tools covered | avg latency | avg tokens | cost (30 tasks) |
+|---|---|---|---|---|---|---|---|
+| react | 30 | **87%** (26) | 43% | 90% | **7.5 s** | **12.4k** | **$0.49** |
+| plan | 30 | **90%** (27) | 43% | 100% | 15.9 s | 22.9k | $0.94 |
+
+By category (success): calc 100/100; extract 60/60; mixed react 80% / plan 100%; retrieval 92/92; web 100/100.
+Cost uses USD 1.10 in / 5.50 out per 1M tokens (EU regional profile, +10% over global; Bedrock pricing page,
+checked 2026-10-02). Token counts include Haiku's tool-use overhead, which is why they are 3x the Ollama counts.
+
+**What the first Bedrock run taught us:** 13 of 60 runs crashed with a `ValidationException`. `extract_pdf` turns
+model-supplied field names ("main contribution") into JSON-schema property keys, and Bedrock only accepts
+`[a-zA-Z0-9_.-]`. Ollama tolerated it silently. Fix: sanitize names at that trust boundary and return an error
+string instead of raising (`test_extract_pdf_sanitizes_field_names`). Only the crashed tasks were rerun
+(the runner resumes and skips finished ids). Lesson: a provider swap is a test, not a config change.
+
+## Reading the numbers (Ollama run; Bedrock tells the same story)
 - **ReAct wins on cost and speed, ties on quality:** about 2.3x faster and 2.4x fewer tokens for the same
   success rate (83% vs 80% is 1 task, well inside noise at n=30).
 - **Plan-and-execute picked the expected tool set far less often (30% vs 67%).** Success stayed high, so the
@@ -44,8 +60,7 @@ By category (success): calc react 100% / plan 80%; extract 80/80; mixed 100/100;
 - **The judge is the same model as the agent** (gemma4:12b): self-preference bias is possible.
 - n=30, one run, so differences of 1-2 tasks are noise. No confidence intervals.
 - Tool-choice is strict set equality; several "wrong" tool sets are harmless extra calls.
-- The Bedrock column (real cost per task, Haiku 4.5) is **not run**: it needs AWS credentials.
-  Run `LLM_BACKEND=bedrock python evals/run.py run` after the AWS setup, then `report`.
+- Bedrock numbers are also a single run; the Haiku judge is the same model as the agent there too.
 
 ## Reproduce
 ```bash

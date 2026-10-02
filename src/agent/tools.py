@@ -2,6 +2,7 @@
 import ast
 import math
 import operator as op
+import re
 
 from langchain_core.tools import tool
 from pydantic import create_model
@@ -64,10 +65,15 @@ def extract_pdf(source: str, fields: list[str]) -> str:
 
     with pymupdf.open(path) as pdf:
         text = "".join(p.get_text() for p in list(pdf)[:4])[:8000]  # ponytail: first 4 pages, add map-reduce if fields live deeper
-    schema = create_model("Extraction", **{f: (str | None, None) for f in fields})
-    res = get_llm().with_structured_output(schema).invoke(
-        f"Extract these fields from the paper excerpt. Use null if absent.\n\n{text}"
-    )
+    # model-supplied names become JSON-schema keys; Bedrock rejects anything outside [a-zA-Z0-9_.-]{1,64}
+    names = [re.sub(r"[^a-zA-Z0-9_.-]+", "_", f).strip("_")[:64] or "field" for f in fields]
+    schema = create_model("Extraction", **{n: (str | None, None) for n in dict.fromkeys(names)})
+    try:
+        res = get_llm().with_structured_output(schema).invoke(
+            f"Extract these fields from the paper excerpt. Use null if absent.\n\n{text}"
+        )
+    except Exception as exc:  # report to the agent instead of crashing the whole run
+        return f"error: extraction failed: {exc}"[:300]
     return res.model_dump_json()
 
 

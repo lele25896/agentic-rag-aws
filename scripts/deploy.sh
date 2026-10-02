@@ -13,7 +13,7 @@ if [ "${1:-}" = "--destroy" ]; then $TF destroy -auto-approve; exit 0; fi
 $TF init -input=false
 $TF apply -auto-approve -target=aws_ecr_repository.repo   # repo must exist before the push
 REPO=$($TF output -raw ecr_repository_url)
-REGION=$(aws configure get region || echo us-east-1)
+REGION=$(aws configure get region || echo eu-west-1)
 aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "${REPO%%/*}"
 docker build --provenance=false -t "$REPO:latest" .   # Lambda rejects OCI attestation manifests
 docker push "$REPO:latest"

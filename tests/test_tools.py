@@ -19,3 +19,22 @@ def test_calc_rejects_code_and_bombs():
 
 def test_extract_pdf_blocks_path_traversal():
     assert extract_pdf.invoke({"source": "../../etc/passwd", "fields": ["a"]}).startswith("error")
+
+
+def test_extract_pdf_sanitizes_field_names(monkeypatch):
+    from agent import tools
+
+    seen = {}
+
+    class FakeLLM:
+        def with_structured_output(self, schema):
+            seen["keys"] = list(schema.model_fields)
+            return self
+
+        def invoke(self, _):
+            return tools.create_model("R", **{k: (str | None, None) for k in seen["keys"]})()
+
+    monkeypatch.setattr(tools, "get_llm", lambda: FakeLLM())
+    pdf = next(tools.DATA_DIR.glob("*.pdf")).stem
+    tools.extract_pdf.invoke({"source": pdf, "fields": ["main contribution", "Reuter-Saueressig (2012)!"]})
+    assert seen["keys"] == ["main_contribution", "Reuter-Saueressig_2012"]

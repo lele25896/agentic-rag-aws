@@ -21,14 +21,16 @@ same tools ---> MCP server (stdio)
 AWS: Function URL -> Lambda (image) -> Bedrock + FAISS in image + DynamoDB checkpoints
 ```
 
-## Eval results (Ollama gemma4:12b, 30 tasks, temperature 0, one run)
-| design | task success | tool-choice acc | avg latency | avg tokens |
-|---|---|---|---|---|
-| ReAct | 83% | 67% | 33 s | 3.9k |
-| Plan-and-execute | 80% | 30% | 77 s | 9.4k |
+## Eval results (30 tasks, temperature 0, one run each)
+| backend | design | task success | tool-choice (exact) | expected tools covered | avg latency | avg tokens | cost / 30 tasks |
+|---|---|---|---|---|---|---|---|
+| Bedrock, Claude Haiku 4.5 (eu) | ReAct | 87% | 43% | 90% | 7.5 s | 12.4k | $0.49 |
+| Bedrock, Claude Haiku 4.5 (eu) | Plan-and-execute | 90% | 43% | 100% | 15.9 s | 22.9k | $0.94 |
+| Ollama, gemma4:12b (laptop GPU) | ReAct | 83% | 67% | 93% | 33 s | 3.9k | 0 |
+| Ollama, gemma4:12b (laptop GPU) | Plan-and-execute | 80% | 30% | 100% | 77 s | 9.4k | 0 |
 
-ReAct matches plan-and-execute on quality at about 2.3x lower latency and 2.4x fewer tokens.
-Caveats (same-model judge, n=30, strict tool metric) in [reports/phase3-evals.md](reports/phase3-evals.md).
+Quality is about equal (the 3-point gaps are 1 task); plan-and-execute costs about 2x the tokens, money and
+latency. Caveats (same-model judge, n=30, strict tool metric) in [reports/phase3-evals.md](reports/phase3-evals.md).
 
 ## Run it locally
 ```bash

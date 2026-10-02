@@ -4,7 +4,7 @@
 a 30-task eval comparing two agent designs on two backends, and a Terraform-defined AWS deployment.
 **Span:** 2026-09-30 → 2026-10-02
 **Owner:** Gabriele Giacometti
-**Status:** done and deployed (eu-west-1). Teardown is one command (`scripts/deploy.sh --destroy`).
+**Status:** done. Deployed and verified on 2026-10-02 (eu-west-1), then torn down (`scripts/deploy.sh --destroy`, 12 resources removed). A recorded session is in `docs/demo.md`; redeploy takes about 3 minutes.
 
 ---
 

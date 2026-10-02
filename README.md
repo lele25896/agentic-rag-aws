@@ -10,7 +10,7 @@ an MCP server, an eval harness comparing two agent designs, and a Terraform-defi
 | Agent (ReAct + plan-and-execute), tools, HITL | done, tested locally |
 | MCP server | done, tested over stdio |
 | Evals (30 tasks x 2 designs) | done on Ollama and Bedrock |
-| AWS (Terraform, Docker, handler) | **deployed and tested** (eu-west-1: Lambda + Bedrock + DynamoDB); tear down with `scripts/deploy.sh --destroy` |
+| AWS (Terraform, Docker, handler) | **deployed and tested on 2026-10-02** (eu-west-1: Lambda + Bedrock + DynamoDB), then torn down to avoid cost. Redeploy in ~3 min with `scripts/deploy.sh`. Recorded session: [docs/demo.md](docs/demo.md) |
 
 ## Architecture
 ```
@@ -51,6 +51,7 @@ python -m pytest tests -q
 Local model: `gemma4:12b` (needs tool calling; llama3 has none). Override with `OLLAMA_MODEL`.
 
 ## Deploy to AWS
+The stack is currently **not running**; this is a recorded demo, see [docs/demo.md](docs/demo.md).
 See [reports/phase5-aws.md](reports/phase5-aws.md). `bash scripts/deploy.sh` / `--destroy`.
 
 ## Reports

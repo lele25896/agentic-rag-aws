@@ -6,4 +6,5 @@ index/
 .terraform/
 *.tfstate*
 infra/build/
-evals/raw/
+*.log
+data/*.pdf

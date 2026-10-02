@@ -33,6 +33,11 @@ Quality is about equal (the 3-point gaps are 1 task); plan-and-execute costs abo
 latency. Caveats (same-model judge, n=30, strict tool metric) in [reports/phase3-evals.md](reports/phase3-evals.md).
 
 ## Run it locally
+The corpus PDFs are not committed (ids and titles in `data/SOURCES.md`). Fetch them once:
+```bash
+for id in 1202.2274v1 1707.09298v5 2504.07877v1 2508.00807v2 2509.12469v2 2601.20820v2 2605.11805v1; do
+  curl -L -o data/$id.pdf https://arxiv.org/pdf/$id; done
+```
 ```bash
 pip install -r requirements.txt            # torch env needed for local embeddings
 export PYTHONPATH=src
@@ -47,6 +52,9 @@ Local model: `gemma4:12b` (needs tool calling; llama3 has none). Override with `
 
 ## Deploy to AWS
 See [reports/phase5-aws.md](reports/phase5-aws.md). `bash scripts/deploy.sh` / `--destroy`.
+
+## Reports
+One study note per phase in `reports/` (phase0 to phase5) and the [final report](reports/final-report.md).
 
 ## Layout
 `src/agent/` (llm, retrieval, tools, graph_react, graph_plan, cli, mcp_server, handler) - `evals/` - `infra/` -

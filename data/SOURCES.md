@@ -1,11 +1,7 @@
 # Demo corpus — Asymptotic Safety / Quantum Einstein Gravity
 
-The PDFs themselves are **not** committed (see `.gitignore`). Reproduce the demo
-corpus by downloading these arXiv papers into `corpus/`:
+The PDFs themselves are **not** committed (see `.gitignore`). Download these arXiv papers into `data/` (command in the README):
 
-```
-python download_arxiv.py --ids 1202.2274 1707.09298 2504.07877 2508.00807 2509.12469 2601.20820 2605.11805
-```
 
 | arXiv ID | Title | Authors |
 |---|---|---|
@@ -17,8 +13,5 @@ python download_arxiv.py --ids 1202.2274 1707.09298 2504.07877 2508.00807 2509.1
 | 2601.20820 | Gravitationally Induced UV Completion of an O(N) Scalar Theory | Bonanno, Glaviano |
 | 2605.11805 | Scaling Solutions of Matter Form Factors in Asymptotically Safe Quantum Gravity | Bonanno, Buccio, Glaviano, Saueressig |
 
-`test_set.json` contains 21 hand-curated question/ground-truth pairs drawn from
-these papers (3 per paper), used to compute RAGAS `context_recall`.
-
-To use a different domain, replace these PDFs with your own and rewrite
-`test_set.json` (see the "Adapting to a new domain" section of the README).
+The 21 hand-curated question/ground-truth pairs behind the retrieval tasks in `evals/tasks.jsonl` come from
+the sibling `langchain-rag-assistant` project (3 per paper).
